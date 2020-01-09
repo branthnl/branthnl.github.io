@@ -1,12 +1,26 @@
+Audio.add('hit', 'sounds/hit.wav');
+Audio.add('jump', 'sounds/jump.wav');
+Audio.add('explosion', 'sounds/explosion.wav');
+Audio.add('bgm', 'sounds/Twistboy - Good Times.ogg', 'sounds/Twistboy - Good Times.mp3');
+
+const Menu = new BranthRoom('Menu', 960, 540);
 const Game = new BranthRoom('Game', 960, 540);
+Room.add(Menu);
 Room.add(Game);
 
 const GRAVITY = 0.65;
 const FRICTION = 0.5;
 
 class Camera extends BranthBehaviour {
+	static get main() {
+		return OBJ.take(Camera)[0];
+	}
 	shake(duration) {
 		this.alarm[0] = duration;
+	}
+	blood(duration) {
+		this.bloodDuration = duration;
+		this.alarm[1] = this.bloodDuration;
 	}
 	update() {
 		if (this.alarm[0] > 0) {
@@ -19,11 +33,26 @@ class Camera extends BranthBehaviour {
 			View.y = 0;
 		}
 	}
+	renderUI() {
+		if (this.alarm[1] > 0) {
+			const c = CTX.createRadialGradient(Room.mid.w, Room.mid.h, Room.mid.h, Room.mid.w, Room.mid.h, Room.h);
+			c.addColorStop(0.5, 'rgba(0, 0, 0, 0)');
+			c.addColorStop(1, 'rgba(255, 0, 0, 0.2)');
+			Draw.setAlpha(Math.clamp(this.alarm[1] / this.bloodDuration, 0, 1) * 0.5);
+			Draw.setColor(c);
+			Draw.rect(0, 0, Room.w, Room.h);
+			Draw.setAlpha(1);
+		}
+	}
 }
 
 class Player extends BranthBehaviour {
-	constructor(x, y, controls, c) {
+	constructor(playerId, x, y, controls, c) {
 		super(x, y);
+		this.playerId = playerId;
+		this.maxHP = 100;
+		this.uiHP = 0;
+		this.HP = this.maxHP;
 		this.keyW = controls.keyW;
 		this.keyA = controls.keyA;
 		this.keyS = controls.keyS;
@@ -44,6 +73,7 @@ class Player extends BranthBehaviour {
 		this.xs = 1;
 		this.ys = 1;
 		this.c = c;
+		Audio.play('jump');
 	}
 	get mid() {
 		return {
@@ -98,6 +128,7 @@ class Player extends BranthBehaviour {
 			this.ys = 1.25;
 			this.jmpHold = true;
 			this.alarm[0] = 666;
+			Audio.play('jump');
 		}
 
 		if (key_wu) this.jmpHold = false;
@@ -135,6 +166,8 @@ class Player extends BranthBehaviour {
 		}
 
 		if ((l_wall || r_wall) && !this.onGround && this.vsp >= 0.5) this.vsp -= GRAVITY * 0.5;
+
+		if (GOING_DOWN) this.vsp = -GRAVITY * 5;
 	}
 	updateCollision() {
 		if (this.bound.l + this.hsp <= 32 || this.bound.r + this.hsp >= Room.w - 32) {
@@ -151,8 +184,9 @@ class Player extends BranthBehaviour {
 			if (this.vsp < 0) this.y = 32 + this.h;
 			if (this.vsp > 0) this.y = Room.h - 32;
 			if (this.vsp > 10) {
-				OBJ.take(Camera)[0].shake(this.vsp * 50);
+				Camera.main.shake(this.vsp * 50);
 				HEALTH -= this.vsp;
+				Audio.play('hit');
 			}
 			this.vsp = 0;
 		}
@@ -175,10 +209,45 @@ class Player extends BranthBehaviour {
 		this.xs += Math.sign(Math.dif(this.xs, 1)) * 0.06;
 		this.ys += Math.sign(Math.dif(this.ys, 1)) * 0.06;
 	}
+	hover(x, y) {
+		let p = { x, y };
+		if (y === undefined) {
+			p = {
+				x: x.x,
+				y: x.y
+			};
+		}
+		return p.x >= this.bound.l && p.x <= this.bound.r && p.y >= this.bound.t && p.y <= this.bound.b;
+	}
+	updateBulletCollision() {
+		if (!GOING_DOWN) {
+			const b = OBJ.take(Bullet);
+			for (let i = 0; i < b.length; i++) {
+				const u = b[i];
+				if (u !== undefined) {
+					if (this.hover(u)) {
+						// this.HP -= 5;
+						OBJ.destroy(u.id);
+						Camera.main.shake(500);
+						Camera.main.blood(500);
+					}
+				}
+			}
+		}
+	}
+	updateHP() {
+		if (this.HP <= 0) {
+			PLAYER_EXISTS[this.playerId] = 0;
+			OBJ.destroy(this.id);
+		}
+		this.uiHP = Math.lerp(this.uiHP, this.HP, 0.1);
+	}
 	update() {
 		this.updateControls();
 		this.updateCollision();
 		this.updateKeepScale();
+		this.updateBulletCollision();
+		this.updateHP();
 	}
 	render() {
 		Draw.setColor(this.c);
@@ -196,6 +265,14 @@ class Player extends BranthBehaviour {
 	}
 	alarm0() {
 		this.jmpHold = false;
+	}
+	renderUI() {
+		// const a = 1 / PLAYER_EXISTS.filter(x => x === 1).length * 0.8;
+		// const c = CTX.createRadialGradient(this.x, this.y, 0, this.x, this.y, Room.w * 1.5);
+		// c.addColorStop(0, 'rgba(0, 0, 0, 0)');
+		// c.addColorStop(this.uiHP / this.maxHP, `rgba(0, 0, 0, ${a})`);
+		// Draw.setColor(c);
+		// Draw.rect(0, 0, Room.w, Room.h);
 	}
 }
 
@@ -262,7 +339,7 @@ class Bullet extends BranthBehaviour {
 	}
 	update() {
 		this.x += Math.lendirx(this.spd, this.d);
-		this.y += Math.lendiry(this.spd, this.d);
+		this.y += Math.lendiry(this.spd, this.d) - (GOING_DOWN? GRAVITY * 15 : 0);
 		if (this.x <= 32 || this.x >= Room.w - 32 || this.y <= 32 || this.y >= Room.h - 32) {
 			OBJ.destroy(this.id);
 		}
@@ -277,16 +354,68 @@ class Bullet extends BranthBehaviour {
 
 class WeaponSpawner extends BranthBehaviour {
 	awake() {
+		this.amount = 0;
 		this.alarm[0] = 1;
 	}
-	alarm0() {
-		const n = new WeaponGun(Room.w * 0.25, 32, 15, 105);
+	add(n) {
 		OBJ.push(WeaponGun, n);
-		this.alarm[1] = 500;
+		this.amount++;
 	}
-	alarm1() {
-		const n = new WeaponGun(Room.w * 0.75, 32, 75, 165);
-		OBJ.push(WeaponGun, n);
+	update() {
+		if (GOING_DOWN && this.amount > 0) {
+			OBJ.clear(WeaponGun);
+			this.amount = 0;
+			this.alarm[0] = 1;
+		}
+		if (!GOING_DOWN && GET_PLAYER_EXISTS === 0 && this.alarm[0] > 1) {
+			this.alarm[0] = 1;
+		}
+	}
+	alarm0() {
+		if (GET_PLAYER_EXISTS() > 0) {
+			let n;
+			switch (this.amount) {
+				case 0:
+					n = new WeaponGun(Room.w * 0.15, 32, 15, 105);
+					this.add(n);
+					break;
+				case 1:
+					n = new WeaponGun(Room.w * 0.85, 32, 75, 165);
+					this.add(n);
+					break;
+				case 2:
+					n = new WeaponGun(Room.w * 0.4, 32, 15, 105);
+					this.add(n);
+					break;
+				case 3:
+					n = new WeaponGun(Room.w * 0.6, 32, 75, 165);
+					this.add(n);
+					break;
+			}
+		}
+		if (this.amount < 4) {
+			this.alarm[0] = 500;
+		}
+	}
+}
+
+class GameManager extends BranthBehaviour {
+	static get main() {
+		return OBJ.take(GameManager)[0];
+	}
+	goDown() {
+		LEVEL--;
+		GOING_DOWN = true;
+		if (LEVEL <= 0) {
+			GAME_OVER = true;
+		}
+		this.alarm[0] = 2000;
+		Audio.play('explosion');
+	}
+	alarm0() {
+		MAX_HEALTH = 100 + 10 * (10 - LEVEL);
+		HEALTH = MAX_HEALTH;
+		GOING_DOWN = false;
 	}
 }
 
@@ -296,17 +425,24 @@ OBJ.add(Weapon);
 OBJ.add(WeaponGun);
 OBJ.add(Bullet);
 OBJ.add(WeaponSpawner);
+OBJ.add(GameManager);
 
 let LEVEL = 10;
 let HEALTH = 100;
 let UI_HEALTH = 100;
 let MAX_HEALTH = 100;
 let GAME_OVER = false;
+let GOING_DOWN = false;
 const PLAYER_EXISTS = [0, 0, 0, 0];
+const GET_PLAYER_EXISTS = () => PLAYER_EXISTS.filter(x => x === 1).length;
 
 Game.start = () => {
 	OBJ.create(Camera);
 	OBJ.create(WeaponSpawner);
+	OBJ.create(GameManager);
+	if (!Audio.isPlaying('bgm')) {
+		Audio.loop('bgm');
+	}
 }
 
 Game.update = () => {
@@ -317,7 +453,7 @@ Game.update = () => {
 			keyS: KeyCode.Down,
 			keyD: KeyCode.Right
 		};
-		const p = new Player(Room.mid.w, Room.mid.h, controls, C.skyBlue);
+		const p = new Player(0, Room.mid.w, Room.mid.h, controls, C.skyBlue);
 		OBJ.push(Player, p);
 		PLAYER_EXISTS[0] = 1;
 	}
@@ -328,17 +464,14 @@ Game.update = () => {
 			keyS: KeyCode.S,
 			keyD: KeyCode.D
 		};
-		const p = new Player(Room.mid.w, Room.mid.h, controls, C.pink);
+		const p = new Player(1, Room.mid.w, Room.mid.h, controls, C.pink);
 		OBJ.push(Player, p);
 		PLAYER_EXISTS[1] = 1;
 	}
-	if (HEALTH <= 0) {
-		LEVEL--;
-		MAX_HEALTH = 100 + 10 * (10 - LEVEL);
-		HEALTH = MAX_HEALTH;
-	}
-	if (LEVEL <= 0) {
-		GAME_OVER = true;
+	if (!GOING_DOWN) {
+		if (HEALTH <= 0) {
+			GameManager.main.goDown();
+		}
 	}
 }
 
@@ -356,33 +489,47 @@ Game.renderUI = () => {
 	Draw.setColor(C.black);
 	Draw.setHVAlign(Align.c, Align.t);
 	Draw.setFont(`bold ${Font.l}`);
-	if (LEVEL > 1) {
+	if (GAME_OVER) {
+		text = `Congrats! You've destroyed the building!`;
+	}
+	else if (GOING_DOWN) {
+		text = `Going down to floor ${LEVEL}`;
+	}
+	else if (LEVEL > 1) {
 		text = `Destroy this floor ${LEVEL}!`;
 	}
-	else if (LEVEL > 0) {
-		text = `One more floor to destroy!`;
-	}
 	else {
-		text = `Congrats! You've destroyed the building!`;
+		text = `One more floor to destroy!`;
 	}
 	Draw.text(Room.mid.w, 50, text);
 
 	// Healthbar
-	const barW = Room.w - 256;
-	UI_HEALTH = Math.lerp(UI_HEALTH, HEALTH, 0.2);
-	if (!GAME_OVER) {
-		Draw.setColor(C.lime);
-		Draw.roundRect(128, 92, barW * Math.clamp(UI_HEALTH / MAX_HEALTH, 0, 1), 16, 5);
+	if (!GOING_DOWN) {
+		const barW = Room.w - 256;
+		UI_HEALTH = Math.lerp(UI_HEALTH, HEALTH, 0.2);
+		if (!GAME_OVER) {
+			Draw.setColor(C.lime);
+			Draw.roundRect(128, 92, barW * Math.clamp(UI_HEALTH / MAX_HEALTH, 0, 1), 16, 5);
+		}
+		Draw.setColor(C.black);
+		Draw.roundRect(128, 92, barW, 16, 5, true);
 	}
-	Draw.setColor(C.black);
-	Draw.roundRect(128, 92, barW, 16, 5, true);
+
+	// Darkness
+	if (PLAYER_EXISTS.filter(x => x === 1).length === 0) {
+		Draw.setColor(`rgba(0, 0, 0, 0.8)`);
+		Draw.rect(0, 0, Room.w, Room.h);
+	}
 
 	// Info
 	Draw.setColor(C.white);
 	Draw.setHVAlign(Align.c, Align.m);
 	Draw.setFont(Font.m);
 	text = ``;
-	if (PLAYER_EXISTS[0] === 0) {
+	if (GAME_OVER) {
+		text = `Yeayy!`;
+	}
+	else if (PLAYER_EXISTS[0] === 0) {
 		text = `Press <Down> to spawn P1.`;
 	}
 	else if (PLAYER_EXISTS[1] === 0) {
@@ -394,5 +541,11 @@ Game.renderUI = () => {
 	Draw.text(Room.mid.w, Room.h - 16, text);
 }
 
+Menu.update = () => {
+	if (Input.keyDown(KeyCode.Enter)) {
+		Room.start('Game');
+	}
+}
+
 BRANTH.start();
-Room.start('Game');
+Room.start('Menu');
