@@ -215,6 +215,9 @@ function BranthDraw(ctx) {
 		ctx.fill();
 		ctx.closePath();
 	}
+	this.scale = function(x, y) {
+		ctx.scale(x, y);
+	}
 	this.clearRect = function(x, y, w, h) {
 		ctx.clearRect(x, y, w, h);
 	}
@@ -1249,5 +1252,9 @@ function appendStuff() {
 
 window.onload = function() {
 	appendStuff();
+	const canvasScaler = 4;
+	canvas.width *= canvasScaler;
+	canvas.height *= canvasScaler;
+	Draw.scale(canvasScaler, canvasScaler);
 	Game.start();
 }
