@@ -532,9 +532,9 @@ Game.renderUI = () => {
 	else if (PLAYER_EXISTS[0] === 0) {
 		text = `Press <Down> to spawn P1.`;
 	}
-	else if (PLAYER_EXISTS[1] === 0) {
-		text = `Press <S> to spawn P2.`;
-	}
+	// else if (PLAYER_EXISTS[1] === 0) {
+	// 	text = `Press <S> to spawn P2.`;
+	// }
 	else {
 		text = `Jump high then release to hit the floor hard and decrease the building's health.`;
 	}
@@ -545,6 +545,13 @@ Menu.update = () => {
 	if (Input.keyDown(KeyCode.Enter)) {
 		Room.start('Game');
 	}
+}
+
+Menu.renderUI = () => {
+	Draw.setFont('bold ' + Font.l);
+	Draw.setColor(C.black);
+	Draw.setHVAlign(Align.c, Align.m);
+	Draw.text(Room.mid.w, Room.mid.h, 'Press Enter to start.');
 }
 
 BRANTH.start();
