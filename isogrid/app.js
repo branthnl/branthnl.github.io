@@ -89,17 +89,21 @@ const MapUI = {
 
 Game.update = () => {
 	const spd = Tile.ws;
-	if (Input.keyHold(KeyCode.Up)) {
-		World.yto -= spd;
-	}
-	if (Input.keyHold(KeyCode.Left)) {
-		World.xto -= spd;
-	}
-	if (Input.keyHold(KeyCode.Down)) {
+	const keyUp = Input.keyHold(KeyCode.Up);
+	const keyDown = Input.keyHold(KeyCode.Down);
+	const keyLeft = Input.keyHold(KeyCode.Left);
+	const keyRight = Input.keyHold(KeyCode.Right);
+	if (keyUp) {
 		World.yto += spd;
 	}
-	if (Input.keyHold(KeyCode.Right)) {
+	if (keyDown) {
+		World.yto -= spd;
+	}
+	if (keyLeft) {
 		World.xto += spd;
+	}
+	if (keyRight) {
+		World.xto -= spd;
 	}
 	if (Input.keyHold(KeyCode.Z)) {
 		World.scaleTo = Math.min(World.scaleMax, World.scaleTo + 0.1);
@@ -107,6 +111,10 @@ Game.update = () => {
 	if (Input.keyHold(KeyCode.X)) {
 		World.scaleTo = Math.max(World.scaleMin, World.scaleTo - 0.1);
 	}
+	const isHold = keyUp || keyDown || keyLeft || keyRight;
+	const gap = isHold? 180 : 150;
+	World.xto = Math.clamp(World.xto, -World.w + Room.w - gap, gap);
+	World.yto = Math.clamp(World.yto, -World.h + Room.h - gap, gap);
 	World.update();
 };
 
@@ -140,6 +148,8 @@ Game.render = () => {
 	const m = Input.screenToWorldPoint(Input.mousePosition);
 	m.x -= World.x;
 	m.y -= World.y;
+	m.x = Math.clamp(m.x, Tile.w * 0.5, World.w - Tile.w * 0.5);
+	m.y = Math.clamp(m.y, Tile.h * 0.5, World.h - Tile.h * 0.5);
 	const c = {
 		wr: Math.floor(m.x / Tile.w),
 		wc: Math.floor(m.y / Tile.h),
@@ -221,14 +231,32 @@ Game.render = () => {
 };
 
 Game.renderUI = () => {
-	Draw.setColor(C.brown);
-	Draw.setLineWidth(10);
-	Draw.rect(MapUI.x, MapUI.y, MapUI.w, MapUI.h, true);
-	Draw.resetLineWidth();
 	Draw.setColor(C.gray);
-	Draw.draw();
+	Draw.rect(MapUI.x, MapUI.y, MapUI.w, MapUI.h);
+	const smRectPoints = [{
+		x: Math.clamp(MapUI.smallRectX, MapUI.x, MapUI.x + MapUI.w),
+		y: Math.clamp(MapUI.smallRectY, MapUI.y, MapUI.y + MapUI.h)
+	}];
+	smRectPoints.push({
+		x: Math.clamp(MapUI.smallRectX + MapUI.smallRectW, MapUI.x, MapUI.x + MapUI.w),
+		y: Math.clamp(MapUI.smallRectY, MapUI.y, MapUI.y + MapUI.h)
+	});
+	smRectPoints.push({
+		x: Math.clamp(MapUI.smallRectX + MapUI.smallRectW, MapUI.x, MapUI.x + MapUI.w),
+		y: Math.clamp(MapUI.smallRectY + MapUI.smallRectH, MapUI.y, MapUI.y + MapUI.h)
+	});
+	smRectPoints.push({
+		x: Math.clamp(MapUI.smallRectX, MapUI.x, MapUI.x + MapUI.w),
+		y: Math.clamp(MapUI.smallRectY + MapUI.smallRectH, MapUI.y, MapUI.y + MapUI.h)
+	});
 	Draw.setColor(C.black);
-	Draw.rect(MapUI.smallRectX, MapUI.smallRectY, MapUI.smallRectW, MapUI.smallRectH);
+	CTX.beginPath();
+	CTX.moveTo(smRectPoints[0].x, smRectPoints[0].y);
+	CTX.lineTo(smRectPoints[1].x, smRectPoints[1].y);
+	CTX.lineTo(smRectPoints[2].x, smRectPoints[2].y);
+	CTX.lineTo(smRectPoints[3].x, smRectPoints[3].y);
+	CTX.closePath();
+	CTX.stroke();
 	Draw.setFont(Font.sb);
 	Draw.setColor(C.black);
 	Draw.setHVAlign(Align.r, Align.b);
