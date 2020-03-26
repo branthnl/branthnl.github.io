@@ -1,0 +1,42 @@
+* {
+	font-family: "Maven Pro", sans-serif;
+}
+
+.sidebar {
+	width: 250px;
+	height: 100vw;
+	position: fixed;
+	top: 0;
+	left: 0;
+	overflow: hidden;
+	background-color: lemonchiffon;
+}
+
+.sidebar > ul {
+	margin: 0;
+	padding-left: 1rem;
+	list-style-type: none;
+}
+
+.sidebar > ul > li {
+	margin-top: 1rem;
+	margin-bottom: 1rem;
+}
+
+a {
+	color: blue;
+	text-decoration: none;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
+.container {
+	background-color: rgba(255, 125, 0, 0.1);
+	width: calc(100vw - 480px);
+	padding: 20px;
+	margin-top: 0;
+	margin-bottom: 0;
+	margin-left: 240px;
+}

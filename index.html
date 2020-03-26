@@ -1,15 +1,141 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title>Welcome - Branth</title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Branth</title>
+	<link href="https://fonts.googleapis.com/css?family=Maven+Pro&display=swap" rel="stylesheet">
+	<link href="https://fonts.googleapis.com/css?family=Roboto&display=swap" rel="stylesheet">
+	<link rel="stylesheet" type="text/css" href="src/style.css">
 </head>
 <body>
-	<p><a href="denthum">Denthum</a></p>
-	<p><a href="simple3d">Simple 3D</a></p>
-	<p><a href="freezepong">Freeze Pong</a></p>
-	<p><a href="isogrid">Isometric Grid</a></p>
-	<p><a href="goldmine">Gold Mine</a></p>
-	<p><a href="isosnake">Isometric Snake</a></p>
-	<p><a href="rope">Rope (New!)</a></p>
+	<div class="sidebar">
+		<ul>
+			<h1>Branth.js</h1>
+			<li><a href="#room">Room</a></li>
+			<li><a href="#draw">Draw</a></li>
+			<li><a href="#input">Input</a></li>
+			<li><a href="#sound">Sound</a></li>
+			<li><a href="#obj">OBJ</a></li>
+			<li><a href="#loader">Loader</a></li>
+			<li><a href="#project">Project</a></li>
+		</ul>
+	</div>
+	<div class="container">
+		<h2 id="room">Room</h2>
+		<ul>
+			<li><a href="pages/Create and start room.html"><div></div><p>Create and start room</p></a>
+				<p>First of all, add Branth.start(); in code to start away with purple and blue radial background.</p>
+				<p>Next, add const Menu = Branth.Room.add("Menu"); before branth start.</p>
+				<p>Explanation: Branth.Room.add(roomName) adds a room with name roomName it will be useful below.</p>
+				<p>To start a room, add Branth.Room.start("Menu");</p>
+			</li>
+			<li><a href="pages/Switch between room.html"><div></div><p>Switch between room</p></a>
+				<p>Create multiple room, then just use Branth.Room.start(roomName); to switch between them.</p>
+			</li>
+		</ul>
+		<h2 id="draw">Draw</h2>
+		<ul>
+			<li><a href="pages/Draw text.html"><div></div><p>Draw text</p></a>
+				<p>Branth.Draw.text(x, y, text); See example in canvas all the way down:<br>Branth.Draw.text(32, 64, "Hi there! Hellow Mwa haha.");</p>
+			</li>
+			<li><a href="pages/Draw basic shapes.html"><div></div><p>Draw basic shapes</p></a>
+				<p>Branth.Draw.rect(x, y, w, h); See below also:<br>Branth.Draw.rect(64, 80, 33, 90);</p>
+			</li>
+		</ul>
+		<h2 id="input">Input</h2>
+		<ul>
+			<li><a href="pages/Get mouse input.html"><div></div><p>Get mouse input</p></a>
+				<p>Branth.Input.Mouse(mouseButtonIndex); -> will return a list of mouse that have boolean properties: .pressed, .released, .hold</p>
+				<p>Use Branth.Input.mouseDown(0); to check if left mouse button is pressed (just once when press start, not hold).</p>
+				<p>Use Branth.Input.mouseHold(1); to check if middle mouse button is hold.</p>
+				<p>Use Branth.Input.mouseUp(2); to check if right mouse button is released.</p>
+			</li>
+			<li><a href="pages/Get keyboard input.html"><div></div><p>Get keyboard input</p></a>
+				<p>Branth.Input.Key(keyCode);</p>
+				<p>Have similar properties to mouse input but using keycode instead of mouse button index.</p>
+				<p>Branth.KeyCode stores all the registered keycode that are able to check.</p>
+				<p>If Branth.KeyCode doesn't have the code you want, feel free to add it and it will automatically handle.</p>
+				<p>Branth.Input.keyDown(Branth.KeyCode.Up); -> Check if arrow key up is pressed (just once when press start, not hold)</p>
+				<p>Branth.Input.keyHold(Branth.KeyCode.Shift); -> Check if shift key is hold.</p>
+				<p>Branth.Input.keyUp(Branth.KeyCode.Space); -> Check if space key is released.</p>
+			</li>
+			<li><a href="pages/Get touch input (works on touch device only).html"><div></div><p>Get touch input (works on touch device only)</p></a>
+				<p>Same, just use touch instead of mouse or key.</p>
+				<p>TO note: touch use index like mouse, Branth tracks touch up 10 indexes.</p>
+				<p><i>Even though I never saw once device with 10 touch support.</i></p>
+			</li>
+		</ul>
+		<h2 id="sound">Sound</h2>
+		<ul>
+			<li><a href="pages/Play sound.html"><div></div><p>Play sound</p></a>
+				<p>Play sound by add Branth.Sound.play(name); to code.</p>
+				<p>name is like the room name, need to add it first.</p>
+				<p>Add sound will be explained in <a href="#loader">Loader</a>.</p>
+			</li>
+			<li><a href="pages/Loop sound.html"><div></div><p>Loop sound</p></a>
+				<p>Branth.Sound.loop(name);</p>
+				<p>To check is sound is playing: Branth.Sound.isPlaying(name);</p>
+				<p>To stop sound (not pause, it will reset the playtime to 0): Branth.Sound.stop(name);</p>
+			</li>
+			<li><a href="pages/Set volume.html"><div></div><p>Set volume</p></a>
+				<p>Branth.Sound.setVolume(name, amount);</p>
+				<p>To get volume:</p>
+				<p>Branth.Sound.getVolume(name, amount);</p>
+			</li>
+		</ul>
+		<h2 id="obj">OBJ</h2>
+		<ul>
+			<li><a href="pages/Add and push object.html"><div></div><p>Add and push object</p></a>
+				<p>
+<pre>
+class Chicken extends BranthObject {
+	constructor(x, y, size) {
+		super(x, y);
+		this.size = size;
+		this.timer = 0;
+		this.eggInterval = 1000;
+	}
+}
+</pre>
+				</p>
+				<p><i>Use Branth.OBJ.add(name); (OBJ is Branth's object handler)<br>to reserve a name for later use to store all following instance.</i></p>
+				<p><strong>Branth.OBJ.add("Chicken");</strong><br>^^^^^^^^^^^^^^^^^^^^^^</p>
+				<p>To push an instance to the following name, use:<br>Branth.OBJ.push("Chicken", new Chicken(10, 10, 5));</p>
+				<p>10, 10, 5 -> are x, y, size, respectively.<br>If you look at Chicken class constructor, there is super(x, y); there,<br>it's because we extends/implements BranthObject to Chicken.</p>
+				<p>BranthObject need x and y. Why do we use branth object?<br>because it extends BranthBehaviour where exists start(), update(), and render() method.</p>
+				<p>Those 3 methods above are necessary to get OBJ (Branth's object handler) to work.</p>
+			</li>
+			<li><a href="pages/Update and render all object.html"><div></div><p>Update and render all object</p></a>
+				<p>To update and render all object is to call all update() and render() function in OBJ lists of instances.</p>
+				<p>Add Branth.OBJ.updateAll(); to call all update() for every instance.</p>
+				<p>Add Branth.OBJ.renderAll(); to call all render() method for every instance that visible=true.</p>
+				<p>visible is a property instantiated as true in BranthObject.</p>
+			</li>
+		</ul>
+		<h2 id="loader">Loader</h2>
+		<ul>
+			<li><a href="pages/Load Image.html"><div></div><p>Load Image</p></a>
+				<p>Branth.Loader.loadImage(origin, name, src);</p>
+				<p>ex: Branth.Loader.loadImage(new Vector2(0.5, 0.5), "Chicken", "img/my_favorite_animal/chicken.png");</p>
+			</li>
+			<li><a href="pages/Load Sound.html"><div></div><p>Load Sound</p></a>
+				<p>WIP</p>
+			</li>
+		</ul>
+		<h2 id="project">Project</h2>
+		<ul>
+			<li><a href="pages/Pong.html"><div></div><p>Pong</p></a>
+				<p>TBD</p>
+			</li>
+			<li><a href="pages/Dota.html"><div></div><p>Dota</p></a>
+				<p>TBD</p>
+			</li>
+		</ul>
+		<br><br>
+		<div id="gameContainer" style="border-radius: 20px; overflow: hidden;"></div>
+	</div>
+	<script src="src/branth.js"></script>
+	<script src="src/app.js"></script>
 </body>
 </html>
