@@ -2,6 +2,10 @@
 	font-family: "Maven Pro", sans-serif;
 }
 
+body {
+	background-color: rgba(0, 125, 255, 0.2);
+}
+
 .sidebar {
 	width: 250px;
 	height: 100vw;
@@ -9,7 +13,7 @@
 	top: 0;
 	left: 0;
 	overflow: hidden;
-	background-color: lemonchiffon;
+	background-color: rgba(0, 125, 255, 0.8);
 }
 
 .sidebar > ul {
@@ -24,7 +28,7 @@
 }
 
 a {
-	color: blue;
+	color: black;
 	text-decoration: none;
 }
 
@@ -33,10 +37,17 @@ a:hover {
 }
 
 .container {
-	background-color: rgba(255, 125, 0, 0.1);
-	width: calc(100vw - 480px);
 	padding: 20px;
 	margin-top: 0;
 	margin-bottom: 0;
 	margin-left: 240px;
+}
+
+@media only screen and (max-width: 1000px) {
+	.sidebar {
+		visibility: hidden;
+	}
+	.container {
+		margin-left: 0;
+	}
 }
